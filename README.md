@@ -12,7 +12,7 @@ As of 20 May 2023, the sub-repository containing all code for the Google Sheets-
 
 ## Data
 
-**[UPDATE]** As of 20 May 2023, I have not uploaded the expert scores for the same reason as above. 
+**[UPDATE]** As of 20 May 2023, I have not uploaded the expert scores for the same reason as stated above. 
 
 * `data/trend-figures` is a sub-folder containing all figures showing long-term trends assessed by the expert panel. The figures show annual (1900-2015) occupancy estimates for each of the 52 butterfly species, with the best estimate of occupancy shown as a black line and uncertainty around estimates (95% credible intervals) represented as a grey ribbon. A vertical red line marked the year 1976. All figures are presented as .png files named as follows: `genus.species.png`.    
 
@@ -24,25 +24,28 @@ The code for all analyses in the main text of the manuscript are divided into **
 
 I have generally commented out `write.csv` and `saveRDS` commands in order to not clog up your machine. For code chunks that run the models, I've set `eval` to FALSE, again, to not clog up your machine as the analyses are computationally expensive and were run on high performance machines.
 
-* __01-ExploreResults.Rdm__ summarises and analyses the expert scores.      
-* __02-.Rdm__ summarises and analyses the expert scores.      
+* __01-ExploreScores.Rdm__ formats, summarises, visualises and analyses the raw expert scores.      
+* __02-.Rdm__ re-sampling exercise testing whether our expert number biases score result.   
+
+
+
+ 
 
 
 __Code - Custom Functions__
-* __01-ExploreResults.R__ summarises and analyses the expert scores.      
-* __02-.Rdm__ summarises and analyses the expert scores.   
+* __None thus far__      
 
 
 __Code - Figures__
-* __01-ExploreResults.Rdm__ summarises and analyses the expert scores.      
-* __02-.Rdm__ summarises and analyses the expert scores.   
+* __figure-2_ScoreDist.R__       
+* __figure-3AB_MeanVar_UnanimityMean.R__   
 
 
 
 
 ## Other folders
 
-* `/figs` contains the figures with file names matching the numbering in the manuscript
+* `/figures` contains the figures with file names matching the numbering in the manuscript
 * `/output` contains the empty subfolders /output/formattedData and /output/modelOutputs, as well as the subfolder /output/summaryTables that contains tables summarising both the data used in models and model outputs. For reproducibility purposes, format the raw data according to the code in /analyses/02-format-data.Rdm and place into /output/formattedData, and download the model outputs and place into /output/modelOutputs. All model outputs are available via the NHM data portal.
 
 
