@@ -1,0 +1,169 @@
+---
+title: "01-ExploreScores"
+author: "Galina M. Jönsson"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+---
+<br />
+
+## Introduction
+
+<br />
+The purpose of the expert review process is to determine whether the long-term resident butterfly trends produced by our occupancy model formulation are a plausible description of how species changed between 1900-1976, and reflects existing knowledge for species post-1976.
+<br />
+<br />
+The participants completed an online questionnaire which asked them to assess each of 52 graphs depicting 52 species' annual occupancy estimates across Great Britain from 1900 to 2016. For each of the 52 species' graphs, participants were asked two identical questions: to separately score (1) the extent to which estimates (including the uncertainty ribbon) between 1900-1976 were a plausible description of species' trends, and (2) whether the estimates (including the uncertainty ribbon) between 1976-2016 reflect existing knowledge (i.e., before and after UKBMS' standardized monitoring was initiated). All questions were scored on a five point scale (Strongly agree; Agree; Neither agree nor disagree; Disagree; Strongly disagree).  
+<br/>
+<br/>
+Disagreement with an occupancy trend indicates that it is not a plausible description nor/or adequately reflect the evidence for that species. 
+<br/>
+The **ten** participants scored both periods for each of 52 species' occupancy plots (i.e., 104 questions per participant) for a total of **1,040** answers. These were coded from -2 (Strongly disagree) to +2 (Strongly agree).
+
+<br/>
+
+### Hypotheses
+
+<br/>
+We will use the answers from the questionnaire to answer/explore the following hypotheses/statements: 
+
+1. The model formulation inaccurately estimates butterfly occupancy.  
+    + If true, we expect that across participants, mean scores for all 52 species and both time periods is zero or lower (i.e., average scores are no better than ‘Neither agree nor disagree’) with high unanimity.   
+    + If true, we also expect that the mean scores and the unanimity scores across participants show no significant difference between the 52 species, not between the two time periods.  
+    + 'Prescription': re-formulate model or abort mission.   
+2. The model formulation accurately estimates occupancy for the later time period (1976-2016), but fails to do so for the early time period (1900-1976). 
+    + If true, we expect that across participants, mean scores across all 52 species for the early time period is zero or lower (i.e., no better than ‘Neither agree nor disagree’), while mean scores for the later time period is zero or lower. Specifically, we expect that for each of the 52 individual species, the distance between mean scores across participants is lower for the early compared to the late time period.         
+    + If true, we also expect that the mean scores and the unanimity scores across participants show no significant difference between the 52 species.  
+    + 'Prescription': re-formulate model or do not use for early time period.   
+3. The model formulation accurately estimates occupancy for the early time period, but fails to do so for the late time period. 
+   + Like point 2 but 'reverse'
+4. The model formulation fails to produce 'accurate/good' outputs for some species, i.e., some species are just hard to model.  
+    + If true, we expect that across participants and time periods, mean scores for some, but not all, species is zero or lower (i.e., meaning that the participants average score was no better than ‘Neither agree nor disagree’). Specifically, we expect that the same individual species score poorly OR well (i.e, less than or greater than zero, respectively) for both time periods.
+    + If true, we expect that the distance between mean scores across participants for the two time periods is low across all species. 
+4. Some species are hard to model in the early time period (1900-1976)  
+5. Some species are hard to model in the later time period (1976-2016)      
+
+<br/>
+
+### Format raw scores
+
+<br />
+
+The individual expert-level raw scores needed to reproduce the first code chunk presented below is not in the common domain as it could contain details that disclose the identities of individual experts. For this code chunk, `eval` is set to `FALSE` in this document; nonetheless, the final data set saved in the last line of this chunk, containing all expert scores with randomized identification numbers, is available in the `/data` sub-folder of this repository.   
+```{r format-data, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+# Load required package(s)
+require(tidyr); require(dplyr)
+
+### Read first participant results
+ex1 <- read.csv("../app_ExpertReviewForm/ParticipantApps/appLepTrendExOp01/expertData__2022-03-22_app01.csv")
+# Add participant ID number
+ex1$ID <- rep("01", 52)
+# pivot separate Q1 & Q2 result columns to a single column and an additional name indicating question number. Name data frame 'df'
+df <- ex1 %>% pivot_longer(cols = starts_with("q"))
+
+### Second participant results
+ex2<-read.csv("../app_ExpertReviewForm/ParticipantApps/appLepTrendExOp02IK/expertData__2022-04-01_app02.csv")
+ex2$ID <- rep("02", 52); df <- rbind(df, (ex2 %>% # Row bind with 'df'
+                                            pivot_longer(cols = starts_with("q"))))
+### Third participant results
+ex3 <- read.csv("../app_ExpertReviewForm/ParticipantApps/appLepTrendExOp03/expertData__2022-04-01_app03.csv")
+ex3$ID <- rep("03", 52); df <- rbind(df, (ex3 %>% pivot_longer(cols = starts_with("q"))))
+### Fourth participant results
+ex4 <- read.csv("../app_ExpertReviewForm/ParticipantApps/appLepTrendExOp04/expertData__2022-02-16_app04.csv")
+ex4$ID <- rep("04", 52); df <- rbind(df, (ex4 %>% pivot_longer(cols = starts_with("q"))))
+### Sixth participant results
+ex6 <- read.csv("../app_ExpertReviewForm/ParticipantApps/appLepTrendExOp06/expertData__2022-04-06_app06.csv")
+ex6$ID <- rep("05", 52); df <- rbind(df, (ex6 %>% pivot_longer(cols = starts_with("q"))))
+### Eighth participant results
+ex8 <- read.csv("../app_ExpertReviewForm/ParticipantApps/appLepTrendExOp08/expertData__2022-04-04_app08.csv")
+ex8$ID <- rep("06", 52); df <- rbind(df, (ex8 %>% pivot_longer(cols = starts_with("q"))))
+### Ninth participant results
+ex09 <- read.csv("../app_ExpertReviewForm/ParticipantApps/appLepTrendExOp09/expertData__2022-04-17_app09.csv")
+ex09$ID <- rep("07", 52); df <- rbind(df, (ex09 %>% pivot_longer(cols = starts_with("q"))))
+### Tenth participant results
+ex10 <- read.csv("../app_ExpertReviewForm/ParticipantApps/appLepTrendExOp10/expertData__2022-04-08_app10.csv")
+ex10$ID <- rep("08", 52); df <- rbind(df, (ex10 %>% pivot_longer(cols = starts_with("q"))))
+### Twelfth participant results
+ex12 <- read.csv("../app_ExpertReviewForm/ParticipantApps/appLepTrendExOp12/expertData__2022-04-01_app12.csv")
+ex12$ID <- rep("09", 52); df <- rbind(df, (ex12 %>% pivot_longer(cols = starts_with("q"))))
+### Thirteenth participant results
+ex13 <- read.csv("../app_ExpertReviewForm/ParticipantApps/appLepTrendExOp13/expertData__2022-04-08_app13.csv")
+ex13$ID <- rep("10", 52); df <- rbind(df, (ex13 %>% pivot_longer(cols = starts_with("q"))))
+
+### Rename ambiguous column names
+names(df)[names(df) == 'name'] <- 'question'; names(df)[names(df) == 'value'] <- 'score' 
+
+### Save collated raw expert scores as csv.file
+#write.csv(df[c("spp_name","com_name","ID","question","score")] , file="ExperstScores_Raw.csv", row.names=F)
+```
+<br/>
+<br/>
+
+The experts scored both questions on five-point Likert scales (ranging from “strongly agree” to “strongly disagree”) to capture information on experts’ degree of confidence. Below, I re-code the scores numerically from -2 (Strongly disagree) to +2 (Strongly agree). 
+
+
+```{r scale-raw-data, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+### Load required package(s)
+require(tidyr); require(dplyr)
+### Read collated raw expert scores
+df <- read.csv("../data/ExperstScores_Raw.csv")
+### re-code responses from -2 (strongly disagree) to +2 (strongly agree)
+df$score <- df$score-3
+### re-code responses from -2 (strongly disagree) to +2 (strongly agree)
+df$question <- as.factor(df$question)
+```
+<br/>
+<br/>
+
+
+## Data Visualisation
+
+Next, I calculate the mean and variance for each participant across questions (i.e. pre-1976 and post-1976) and species, as well as separately for each question (i.e. pre-1976 and post-1976) across the 52 species.
+<br/>
+<br/>
+<br/>
+```{r figure1, eval=TRUE, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE}
+# Load required package(s)
+require(tidyr); require(dplyr); require(ggplot2)
+
+### Subset and summarise response data
+df2 <- as.data.frame(na.omit(df[, c("ID", "question", "score")]) %>% group_by(ID, question) %>% summarise(Mean = mean(score), Variance = (var(score))))
+
+
+# Define colour blind friendly palette
+cbPalette <- c("#9E0142", "#D53E4F", "#F46D43", "#FDAE61", "#FEE08B", "#E6F598", "#ABDDA4", "#66C2A5", "#3288BD", "#5E4FA2")
+cbPalette <- c(#"#000000",  # "#999999", 
+               "grey36", "#E69F00", "#009E73", "#66CC99",
+               "#F0E442","#56B4E9", "#0072B2",  "#9999CC",
+               "#CC79A7", "#D55E00") # , "#9E0142")
+
+
+### Graph
+p <- ggplot() + # Empty ggplot function to allow use of different data sets for plotting 
+  geom_line(aes(Mean, Variance, group = ID), df2, color="grey") + # Line between same species' time periods
+  geom_point(aes(Mean, Variance, shape=question, size=question, colour=ID), 
+             df2, size=4.5, position = "jitter") + 
+  scale_shape_manual(question="\nTime Period", 
+                     values=c(18,20), 
+                     labels = c("1900-1976", "1976-2016")) +
+  scale_colour_manual(question="Participant ID", score=cbPalette) +
+  labs(x = "Mean Score",
+       y = "
+       Variance") +
+       #title ="Figure 1: Mean scores against variance per participant",
+       #subtitle = "Summarised across species for both time periods separately and combined") +
+  theme(legend.key = element_rect(fill = "white", colour = NA)) +
+  theme(panel.background = element_rect(fill = "white", colour = "black")) +
+  guides(size = "none",
+         shape = guide_legend(order=1),
+         colour = guide_legend(order=2)) +
+    guides(colour = guide_legend(override.aes = list(shape = c(15,15,15,15,15,15,15,15,15,15),
+                                                     size = 3.7))) + 
+  theme(text = element_text(size = 14))
+p
+
+#ggsave("../plots/Participant_meanVar.png",width=7,height=4)
+```
