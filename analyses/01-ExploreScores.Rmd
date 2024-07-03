@@ -102,7 +102,7 @@ names(df)[names(df) == 'name'] <- 'question'; names(df)[names(df) == 'value'] <-
 <br/>
 <br/>
 
-The experts scored both questions on five-point Likert scales (ranging from “strongly agree” to “strongly disagree”) to capture information on experts’ degree of confidence. Below, I re-code the scores numerically from -2 (Strongly disagree) to +2 (Strongly agree). 
+The experts scored both questions on five-point Likert scales (ranging from “strongly agree” to “strongly disagree”) to capture information on experts’ degree of confidence. Below, I re-format the scores numerically from -2 (Strongly disagree) to +2 (Strongly agree). 
 
 
 ```{r scale-raw-data, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
@@ -112,8 +112,10 @@ require(tidyr); require(dplyr)
 df <- read.csv("../data/ExperstScores_Raw.csv")
 ### re-code responses from -2 (strongly disagree) to +2 (strongly agree)
 df$score <- df$score-3
-### re-code responses from -2 (strongly disagree) to +2 (strongly agree)
-df$question <- as.factor(df$question)
+### specify variable "ID" as discrete factor and order level 
+df$ID <- as.factor(as.character(df$ID))
+df$ID <- ordered(df$ID, levels = c("1", "2", "3", "4", "5", "6", "7",
+                                     "8", "9", "10"))
 ```
 <br/>
 <br/>
@@ -121,49 +123,203 @@ df$question <- as.factor(df$question)
 
 ## Data Visualisation
 
-Next, I calculate the mean and variance for each participant across questions (i.e. pre-1976 and post-1976) and species, as well as separately for each question (i.e. pre-1976 and post-1976) across the 52 species.
+<br/>
+Let's first look at the distribution of all scores across experts and species per questions referring to each of the two time periods (i.e. pre-1976 and post-1976).
 <br/>
 <br/>
+```{r figureA, eval=TRUE, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE}
+require("dplyr"); require("RColorBrewer"); require("R.utils"); require("ggplot2"); require("wesanderson")
+
+# new response column based on multiple conditions:
+dftemp <- df %>% mutate(response = 
+                          case_when(score == -2 ~ "Strongly disagree", 
+                                    score == -1 ~ "Disagree", 
+                                    score == 0 ~ "Neither agree nor disagree", 
+                                    score == 1 ~ "Agree",
+                                    score == 2 ~ "Strongly agree"))
+
+names(dftemp)[names(dftemp) == "question"] <- "Time_Period"
+dftemp[dftemp$'Time_Period'=="q1", "Time_Period"] <- "1900-1976"
+dftemp[dftemp$'Time_Period'=="q2", "Time_Period"] <- "1976-2015"
+
+dftemp <- dftemp %>%
+	group_by(Time_Period, response) %>%  # grouping by these two variables
+	tally() %>%  # counting the number of responses
+	mutate(perc = n / sum(n) * 100) %>%
+	dplyr::select(-n) %>%
+	group_by(Time_Period) %>%
+	spread(response, perc)
+# Remove NA column
+dftemp <- dftemp[,-7]
+
+dftemp <- dftemp %>%
+	mutate(midlow = `Neither agree nor disagree` / 2,
+		midhigh = `Neither agree nor disagree` / 2) %>%
+	dplyr::select(Time_Period, 'Strongly disagree', 'Disagree', midlow, midhigh, 'Agree', 'Strongly agree') %>%
+	gather(key = response, value = perc, 2:7) %>%
+	`colnames<-`(c("Time_Period", "response", "perc"))
+
+df_plot_hi <- dftemp %>%
+	filter(response %in% c('Strongly agree', 'Agree' , 'midhigh')) %>%
+	mutate(response = factor(response, levels = c('Strongly agree', 'Agree' , 'midhigh')))
+
+df_plot_lo <- dftemp %>%
+	filter(response %in% c("midlow", "Disagree", "Strongly disagree")) %>%
+	mutate(response = factor(response, levels = c("Strongly disagree", "Disagree", "midlow")))
+
+# Use wesanderson to store a preset diverging colour palette as a vector of colour codes
+mycols <- wes_palette("Zissou1", n=15, type="continuous")[c(12,8,7,5,1)]
+# Duplicate the middle value since "Neither agree nor disagree" is two groups: "midhigh" and "midlow"
+mycols <- insert(mycols, ats = 3, wes_palette("Zissou1", n=10, type="continuous")[c(5)])
+# Replace the ugly white colour for "Neither agree nor disagree" with a pleasant dishwater grey
+mycols <- gsub("#CAC656", "#9C9C9C", mycols) # <0%
+mycols <- gsub("#D1C74C", "#9C9C9C", mycols) # >0%
+# Assign names to the vector based on the colours we want for each group
+names(mycols) <- c('Strongly disagree', 'Disagree', 'midhigh', 'midlow', "Agree", "Strongly agree")
+
+### Plot figure
+pA <- ggplot() +
+	geom_bar(data = df_plot_hi, aes(x = Time_Period, y=perc, fill = response), stat="identity") +
+	geom_bar(data = df_plot_lo, aes(x = Time_Period, y=-perc, fill = response), stat="identity") +
+	geom_hline(yintercept = 0, color =c("black")) +
+	scale_fill_manual(values = mycols,
+		breaks = c('Strongly agree', 'Agree', 'midhigh', "Disagree", "Strongly disagree"),
+		labels = c('Strongly agree', 'Agree', 'Neither agree nor disagree', "Disagree", "Strongly disagree")) +
+	coord_flip() +
+	labs(x = "Time Period", 
+	     y = "Percentage of answers (%)",
+       fill = "Score",
+       title = "Figure A: Distribution of all scores for each time period",
+       subtitle = "Across species and participants") +
+	theme_classic() +
+  theme(text = element_text(size = 14)) 
+
+pA
+```
 <br/>
-```{r figure1, eval=TRUE, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE}
-# Load required package(s)
+<br/>
+
+
+Next, I visualise the mean and variance for each participant separately for each question (i.e. pre-1976 and post-1976) across the 52 species.
+<br/>
+```{r figureB, eval=TRUE, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE}
+### Load required package(s)
 require(tidyr); require(dplyr); require(ggplot2)
 
+### specify variable "question" (corresponding to time period) as discrete factor
+df$question <- as.factor(df$question)
+
+######################################################################
+### Mean score against variance per participant ID
+
+
 ### Subset and summarise response data
-df2 <- as.data.frame(na.omit(df[, c("ID", "question", "score")]) %>% group_by(ID, question) %>% summarise(Mean = mean(score), Variance = (var(score))))
+df2 <- as.data.frame(na.omit(df[, c("ID", "question", "score")]) 
+                     %>% group_by(ID, question) 
+                     %>% summarise(Mean = mean(score), Variance = (var(score))))
 
-
-# Define colour blind friendly palette
-cbPalette <- c("#9E0142", "#D53E4F", "#F46D43", "#FDAE61", "#FEE08B", "#E6F598", "#ABDDA4", "#66C2A5", "#3288BD", "#5E4FA2")
+### Define colour blind friendly palette
 cbPalette <- c(#"#000000",  # "#999999", 
                "grey36", "#E69F00", "#009E73", "#66CC99",
                "#F0E442","#56B4E9", "#0072B2",  "#9999CC",
                "#CC79A7", "#D55E00") # , "#9E0142")
 
-
 ### Graph
-p <- ggplot() + # Empty ggplot function to allow use of different data sets for plotting 
+p <- ggplot() + 
   geom_line(aes(Mean, Variance, group = ID), df2, color="grey") + # Line between same species' time periods
   geom_point(aes(Mean, Variance, shape=question, size=question, colour=ID), 
              df2, size=4.5, position = "jitter") + 
-  scale_shape_manual(question="\nTime Period", 
+  scale_shape_manual(name="\nTime Period", 
                      values=c(18,20), 
                      labels = c("1900-1976", "1976-2016")) +
-  scale_colour_manual(question="Participant ID", score=cbPalette) +
+  scale_colour_manual(name="Participant ID", values=cbPalette) +
   labs(x = "Mean Score",
        y = "
-       Variance") +
-       #title ="Figure 1: Mean scores against variance per participant",
-       #subtitle = "Summarised across species for both time periods separately and combined") +
+       Variance",
+       title = "Figure B: Mean score against variance per participant ID",
+       subtitle = "Summarised across species for each time period") +
   theme(legend.key = element_rect(fill = "white", colour = NA)) +
   theme(panel.background = element_rect(fill = "white", colour = "black")) +
   guides(size = "none",
          shape = guide_legend(order=1),
          colour = guide_legend(order=2)) +
+  # ID legend colour shape different to either time period
     guides(colour = guide_legend(override.aes = list(shape = c(15,15,15,15,15,15,15,15,15,15),
                                                      size = 3.7))) + 
   theme(text = element_text(size = 14))
 p
-
-#ggsave("../plots/Participant_meanVar.png",width=7,height=4)
 ```
+<br/>
+<br/>
+**General trends: Mean Scores**  
+
+* On average across species, all participants score post-1976 trends (diamond) higher than pre-1976 trends (triangle). 
+* All but one participants' (ID 09) mean score across the two time periods (circles) are greater than zero meaning that these participants average scores were generally better than ‘Neither agree nor disagree’.<br/>
+* All participants, on average, scored post-1976 trends above zero, indicating that generally, there is some level of agreement/plausibility for the late time period. <br/>
+* Three of ten participants' mean scores for the 'pre-1976' periods (triangle) are negative (04, 09 and 10), i.e., no better than ‘Neither agree nor disagree’ and instead, more likely to be disagreed, than agreed, with.  <br/>
+    + One participant (ID 09) stands out as scoring lower than others across all questions.<br/>
+<br/>   
+
+**General trends: Variance**  
+
+* The variance among scores for pre-1976 trends (triangle) are generally greater than for post-1976 trends (diamond). 
+* Most participants' difference between pre-1976 trends' (triangle) and post-1976 trends' (diamond) score variances are around, or just above, 0.05; however, three participants relative variance differences deviate from the generality. Namely, ID01, ID06 and ID10, whose answers tend to be more consistent/unanimous to questions on the later time series while answers for the early part of the time series vary more depending on species.<br/>
+<br />
+<br />
+<br />
+
+***
+Next, I also calculate the mean and variance for each species across participants, and measured the unanimity across participants as 1-variance (Figure C).
+of the time series vary more depending on species.<br/>
+<br />
+<br />
+
+
+```{r figureC, eval=TRUE, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE}
+### Load required package(s)
+require(tidyr); require(dplyr); require(ggplot2); require(RColorBrewer)
+
+### Define constraint Line
+constraintLine <- data.frame(nMax = as.numeric(0:10), nMin = as.numeric(10:0),
+                             mean = as.numeric(rep(NA, 11)), # To populate
+                             unanimity = as.numeric(rep(NA, 11))) # To populate
+# Loop through each row with number of possible extremes (2 or -2) 
+for(i in 1:nrow(constraintLine)){ # For each row, create a vector with ten (10) elements:
+  temp <- append(rep(-2, constraintLine$nMax[[i]]), # nMax times 2 ('Strongly agree')
+                 rep(2, constraintLine$nMin[[i]])) # nMin times -2 ('Strongly disagree')
+  constraintLine$mean[[i]] <- mean(temp) # Use vector to find mean
+  constraintLine$unanimity[[i]] <- 1-var(temp) # and unanimity
+}
+# constraintLine <- subset(constraintLine, mean>1.1)
+
+### Subset and summarise response data
+df3 <- as.data.frame(na.omit(df[, c("spp_name", "question", "score")]) %>% 
+                       group_by(spp_name, question) %>% 
+                       summarise(Mean = mean(score), Unanimity = (1 - (var(score)))))
+
+# Define colours
+cols <- c("#E69F00", "#009E73")
+
+### Graph
+q <- ggplot(df3, aes(Mean, Unanimity)) + 
+  geom_line(aes(group = spp_name), color="grey") + # Line between same species' time periods
+  geom_jitter(width = 0.04, height = 0.04, 
+              aes(group = question, shape=question, colour=question),
+              size=3.5) + # use jitter over geom_points to reveal overlapping points
+  geom_line(aes(mean, unanimity), constraintLine) + # Add constraint line
+  scale_shape_manual("Time Period", 
+                     values=c(18,20),
+                     labels = c("1900-1976", "1976-2016")) +
+  scale_colour_manual("Time Period", values=cols,
+                      labels = c("1900-1976", "1976-2016")) +
+  labs(x = "Mean Score", y = "
+       Unanimity",
+       title ="Figure C: Mean score per species against unanimity (1- variance)",
+       subtitle = "Summarised across expert respondents for each time period") +
+  theme(legend.key = element_rect(fill = "white", color = NA)) +
+  theme(panel.background=element_rect(fill="white", colour="black")) +
+  coord_cartesian(ylim=c(-1.6, 1)) +
+  theme(text = element_text(size = 14))   
+q
+```
+
