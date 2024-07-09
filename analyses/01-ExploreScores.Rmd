@@ -265,8 +265,6 @@ p
 * The variance among scores for pre-1976 trends (triangle) are generally greater than for post-1976 trends (diamond). 
 * Most participants' difference between pre-1976 trends' (triangle) and post-1976 trends' (diamond) score variances are around, or just above, 0.05; however, three participants relative variance differences deviate from the generality. Namely, ID01, ID06 and ID10, whose answers tend to be more consistent/unanimous to questions on the later time series while answers for the early part of the time series vary more depending on species.<br/>
 <br />
-<br />
-<br />
 
 ***
 Next, I also calculate the mean and variance for each species across participants, and measured the unanimity across participants as 1-variance (Figure C).
@@ -290,7 +288,6 @@ for(i in 1:nrow(constraintLine)){ # For each row, create a vector with ten (10) 
   constraintLine$mean[[i]] <- mean(temp) # Use vector to find mean
   constraintLine$unanimity[[i]] <- 1-var(temp) # and unanimity
 }
-# constraintLine <- subset(constraintLine, mean>1.1)
 
 ### Subset and summarise response data
 df3 <- as.data.frame(na.omit(df[, c("spp_name", "question", "score")]) %>% 
@@ -314,7 +311,7 @@ q <- ggplot(df3, aes(Mean, Unanimity)) +
                       labels = c("1900-1976", "1976-2016")) +
   labs(x = "Mean Score", y = "
        Unanimity",
-       title ="Figure C: Mean score per species against unanimity (1- variance)",
+       title ="Figure C: Mean score per sp. against unanimity (1-variance)",
        subtitle = "Summarised across expert respondents for each time period") +
   theme(legend.key = element_rect(fill = "white", color = NA)) +
   theme(panel.background=element_rect(fill="white", colour="black")) +
@@ -322,4 +319,5 @@ q <- ggplot(df3, aes(Mean, Unanimity)) +
   theme(text = element_text(size = 14))   
 q
 ```
-
+<br />
+<br />
