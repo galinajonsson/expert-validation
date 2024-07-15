@@ -14,7 +14,7 @@ output:
 
 The purpose of the expert review process is to determine whether the long-term resident butterfly trends produced by our occupancy model formulation are a plausible description of how species changed between 1900-1976, and reflects existing knowledge for species post-1976.
 <br />
-The current script contains all code and results for the statistical analyses of the experts' scores. Namely, we fit a linear mixed-effects model to seek more definitive answers to the <span style="color: red;">**questions above figures suggest (see "01-ExploreResults.Rmd" for details).** </span>
+The current script contains all code and results for the statistical analyses of the experts' scores. Namely, we fit a linear mixed-effects model to seek more definitive answers to the questions that emerged whilst exploring the results (see "01-ExploreResults.Rmd" for details).
 <br />
 We use a mixed effects model to test whether time period (i.e., 1900-1976 vs. 1976-2016) effects expert scores (Agresti, 2002; Gibson et al., 2011; Norman, 2010); in other words, whether the experts have scored the two periods differently. We therefore fit the model with time period as a fixed effect, and both taxon and respondent ID as random effects. 
 <br />
@@ -66,21 +66,12 @@ We will therefore continue with the normal (Gaussian) model.
 
 # Testing mixed models parameters
 
-<span style="color: red;">*Mixed model parameters do not have nice asymptotic distributions to test against. (i.e., the parameters do not asymptotically converge to known distributions), complicating the inferences which can be made from mixed models.*
+*Fixed effects represent an effect that if we draw many samples, the effect would be consistent across samples (Winter 2019) while random effects should vary for each new sample that is drawn. Random effects represent a higher level variable under which data points are grouped. This implies that random effects must be categorical. Random effects represent a sample of an infinite number of possible levels, whilst fixed effects, on the other hand, typically do not represent a random sample but a fixed set of variable levels.*
 
-*One source of the complexity is a penalty factor (shrinkage) which is applied to the random effects in the calculation of the likelihood (or restricted likelihood) function the model is optimized to. This results in distributions which are no longer chi squared or F. This penalty factor also complicates determining the degrees of freedom to associate with the estimate of a random effect. For example a variance parameter, say r1, maybe estimated from twenty levels in a model. The design matrix used to estimate the model parameters uses twenty indicator variables for these twenty levels. There is only one parameter for these twenty indicators in the model. We would typically associate one degree of freedom with one estimated value. The design matrix used includes the twenty indicator variables and we would normally associate twenty degrees of freedom with these twenty indicators. Since these twenty indicators have a shrinkage factor applied to them, we do not really need twenty degrees of freedom. So what would be the correct degrees of freedom to use for the cost to estimate this one variance parameter? One? twenty? Something in between? Unfortunately there is no generally accepted theory which provides an answer to this question. Assuming we can find a good value for the degrees of freedom, we still can not count on our test statistic (from likelihood ratio tests and the like) to be F or chi distributed with the penalty applied to the model.*
-
-*Another source of complications is testing the significance of a variance parameter, θ. Since the variance must be greater than or equal to zero, a test of zero is on the border of the parameter space. Tests of parameters are valid only on the interior of their space and not on the border.*
-
-*The correlation structure within the data complicates using bootstrap procedures to test these statistics which do not have known distributions. Parametric bootstraps which can more easily account for the correlation in the model are more typically used for inference in mixed models than bootstraps, which are non-parametric.*</span>
-
-
-<span style="color: red;">We use a mixed effects model to test whether time period (i.e., 1900-1976 vs. 1976-2016) effects expert scores (Agresti, 2002; Gibson et al., 2011; Norman, 2010); in other words, whether the experts have scored the two periods differently. We therefore fit the model with time period as a fixed effect, and both taxon and respondent ID as random effects. We tested whether scores differed for the two time periods using a type II Wald χ2 test  . All code used to generate these analyses are available at “https://github.com/galinajonsson/LepUK_ExpertReview”.</span>
-
+*Mixed model parameters do not have nice asymptotic distributions to test against. (i.e., the parameters do not asymptotically converge to known distributions), complicating the inferences which can be made from such models. One source of the complexity is a penalty factor (shrinkage) which is applied to the random effects in the calculation of the likelihood (or restricted likelihood) function the model is optimized to. This results in distributions which are no longer chi squared or F. This penalty factor also complicates determining the degrees of freedom to associate with the estimate of a random effect.* Therefore, we use both visual and quantitative testes for the fixed effect, but only vial diagnostics for the random effects.
 <br/>
 <br/>
 <br/>
-
 
 ## Time period (fixed) effect
 
@@ -113,112 +104,149 @@ The model summary output indicates that scores differ between the two time perio
 
 ### Hypothesis testing: Time period effect
 
-We explicitly test whether scores differ between the two time periods using a type II Wald χ2 test.
+We explicitly test whether scores differ between the two time periods using a type II Wald $x^{2}$ test.
 <br/>
 ```{r test-fixed-effect, message=FALSE, eval=TRUE, warning=FALSE, echo=TRUE, cache=FALSE}
 car::Anova(lmerNormal)
 ```
 <br/>
-The type II Wald chi square test confirms that scores for Pre-1976 trends are significantly lower than post-1976 scores: on average, pre-1976 trend scores are 0.70428 lower than post-1976 scores.    
+The type II Wald $x^{2}$ square test confirms that scores for Pre-1976 trends are significantly lower than post-1976 scores: on average, pre-1976 trend scores are 0.70428 lower than post-1976 scores.    
 
 We now look into a few different model diagnostics to decipher what's up with our random effect. 
 <br/>
 <br/>
 <br/>
 
-## <span style="color: red;">Species ID (random) effect</span>
-
-## <span style="color: red;">Participant ID (random) effect</span>
-
+## Species ID (random) effect
 
 **Useful resources:**
 * https://slcladal.github.io/regression.html#2_Mixed-Effects_Regression  
 * Book: J. C. Pinheiro & D. M. Bates. 2000. *Mixed-Effects Models in S and S-PLUS*, **Chapter 1.1**. Springer.
 
 <br/>
-First, we extract the conditional modes of the random effects from the fitted model object. As our fitted model is a linear mixed model, the conditional modes are also the conditional means.
+Random Effects can be visualized using two parameters: the intercept (the point where the regression line crosses the y-axis at x = 0) and the slope (the acclivity of the regression line). In contrast to fixed-effects models, that have only 1 intercept and one slope, mixed-effects models can therefore have various random intercepts or various random slopes, or both. Here, we will only focus on the random intercepts because this is the more common method.
+<br/>
 
-Second, we use the extracted modes to generate diagnostic plots focusing on the random effect structure. Namely, we draw quantile-quantile plots of a sample against a theoretical distribution, possibly conditioned on other variables.
+First, we extract the conditional modes of the random effects from the fitted model object. As our fitted model is a linear mixed model, the conditional modes are also the conditional means.<br/>
+Second, we use the extracted modes to generate diagnostic plots focusing on the random effect structure of species ID here (see below for participant ID): <br/>
 
-```{r diagnostics1, message=FALSE, eval=TRUE, echo=TRUE, cache=FALSE, fig.show="hold"}
+* Cleveland dot plot, showing the estimated random effects (coefficients) grouped according to all combinations of the levels of the factors (here, species ID).    
+* Quantile-quantile plots of a sample against a theoretical distribution.   
+<br/>
+```{r diagnostics1-spp, message=FALSE, eval=TRUE, echo=TRUE, cache=FALSE, fig.show="hold"}
 # Load required package(s)
 require(ggplot2); require(lattice)
 
-# Extract the modes of the random effects
+# Extract the modes of the random effect spp_name
 rr1 <- ranef(lmerNormal)
 
-# "Draw qq plots of a sample against a theoretical distribution, possibly conditioned on other variables."
-par(mfrow=c(2,1))
-dotplot(rr1)$spp_name
-qqmath(rr1)$spp_name
-#dotplot(rr1)$ID
-#qqmath(rr1)$ID
+##################### Cleveland dot plot
+## Collate data
+dd <- as.data.frame(rr1)
+dd <- dd[dd$'grpvar'=="spp_name",]
+# Plot
+ggplot(dd, aes(y=grp,x=condval)) +
+  geom_point() + facet_wrap(~term,scales="free_x") +
+  geom_errorbarh(aes(xmin=condval -2*condsd,
+                     xmax=condval +2*condsd), height=0) +
+  labs(x = "Value of Conditional Mean", y = "Species",
+       title = "Figure B: Species ID cleveland dot plot",
+       subtitle = "Random effect of the intercepts") 
+
+
+##################### QQ plot
+## Collate data
+qq <- as.data.frame(qqmath(rr1)$spp_name$panel.args[[1]])
+qq <- unique(merge(qq, dd[,c(2,4,5)], by.x = "x", by.y = "condval", all.x = TRUE, all.y = FALSE))
+# Plot
+ggplot(qq, aes(y=y,x=x)) +
+  geom_point() + geom_errorbarh(aes(xmin=x -2*condsd,
+                     xmax=x +2*condsd)) +
+  facet_wrap(~term,scales="free_x") +
+  labs(x = "Value of Conditional Mean", 
+	     y = "Standard normal qunatiles",
+       title = "Figure C: Species ID QQ plot",
+       subtitle = "Random effect of the intercepts") 
 ```
 <br />
-**General trends:**  
-
-* There appears to be differences among both participants and species. 
-    + *Species*: also look as if some are generally 'easier', whilst others are 'hard', to model for both time periods as evident from some scoring high and other low across periods and participants. Which are admittedly hard to see on these plots so let's move on. <br/>
-
-
-```{r diagnostics1-ID, message=FALSE, eval=TRUE, echo=TRUE, cache=FALSE, fig.show="hold"}
-# "Draw qq plots of a sample against a theoretical distribution, possibly conditioned on other variables."
-dotplot(rr1)$ID
-qqmath(rr1)$ID
-```
-<br />
-**General trends:**  
-
-* There appears to be differences among both participants and species. 
-    + *Participants*: Two extremes are 09 and 06, which tend to score low and high, respectively, across species and time series. <br/>
-
-<br />
-<br />
-<br />
-***
+**General trends:** There appears to be differences among species. Some species look as if some are generally 'easier' whilst others are 'harder' to model for both time periods as evident from some scoring high and other low across periods and participants. These are admittedly hard to see on these plots so let's move on. 
 
 <br/>
-<br/>
-```{r diagnostics2, message=FALSE, eval=TRUE, echo=TRUE, cache=FALSE}
-plot(lmerNormal, ID ~ resid(.), abline = 0, 
-     ylab ="Participant ID", xlab = "Residuals") # generate diagnostic plots
+```{r diagnostics2-spp, message=FALSE, eval=TRUE, echo=TRUE, cache=FALSE}
 plot(lmerNormal, spp_name ~ resid(.), abline = 0, 
      ylab ="Species", xlab = "Residuals") # generate diagnostic plots
 ```
 <br/>
+The plot above shows that there are some outliers (points outside the boxes) and that the variability differs between species.
+
 <br/>
-The plots show that there are some outliers (points outside the boxes) and that the variability differs between both participants and species; we therefore examine both participants' and species' standardized residuals (or Pearson’s residuals) versus fitted values in isolation.
+<br/>
+<br/>
+
+## Participant ID (random) effect
+<br/>
+Here, we repeat the visual inspection/diagnostic plots produced for species ID (above) for the random effect participant ID. 
+<br/>
+```{r diagnostics1-id, message=FALSE, eval=TRUE, echo=TRUE, cache=FALSE, fig.show="hold"}
+# Load required package(s)
+require(ggplot2); require(lattice)
+
+# Extract the modes of the random effect ID
+rr1 <- ranef(lmerNormal)
+
+##################### Cleveland dot plot
+## Collate data
+dd <- as.data.frame(rr1)
+dd <- dd[dd$'grpvar'=="ID",]
+# Plot
+ggplot(dd, aes(y=grp,x=condval)) +
+  geom_point() + facet_wrap(~term,scales="free_x") +
+  geom_errorbarh(aes(xmin=condval -2*condsd,
+                     xmax=condval +2*condsd), height=0) +
+  labs(x = "Value of Conditional Mean", y = "Participant ID",
+       title = "Figure D: Participant ID cleveland dot plot",
+       subtitle = "Random effect of the intercepts") 
+
+
+##################### QQ plot
+## Collate data
+qq <- as.data.frame(qqmath(rr1)$ID$panel.args[[1]])
+qq <- unique(merge(qq, dd[,c(2,4,5)], by.x = "x", by.y = "condval", all.x = TRUE, all.y = FALSE))
+# Plot
+ggplot(qq, aes(y=y,x=x)) +
+  geom_point() + geom_errorbarh(aes(xmin=x -2*condsd,
+                     xmax=x +2*condsd)) +
+  facet_wrap(~term,scales="free_x") +
+  labs(x = "Value of Conditional Mean", 
+	     y = "Standard normal qunatiles",
+       title = "Figure E: Participant ID QQ plot",
+       subtitle = "Random effect of the intercepts") 
+```
+<br />
+**General trends:** There appears to be differences among participants. Two extremes are 09 and 06, which tend to score low and high, respectively, across species and time series. 
+
+<br/>
+```{r diagnostics2, message=FALSE, eval=TRUE, echo=TRUE, cache=FALSE}
+plot(lmerNormal, ID ~ resid(.), abline = 0, 
+     ylab ="Participant ID", xlab = "Residuals") # generate diagnostic plots
+```
+<br/>
+<br/>
+The plot above show that there are some outliers (points outside the boxes) and that the variability differs between participants.
 
 * Note the -3 residual for participant 05 (suspected mistake; Figure 6). 
 * Neither participant 04 nor 10 (also suspected mistakes; Figure 6) look like they have 'extreme' residuals. <br/>
 
-***
-
+We therefore examine both participants' and species' standardized residuals (or Pearson’s residuals) versus fitted values in isolation.
 <br/>
-
-
-```{r diagnostics3, message=FALSE, eval=TRUE, echo=TRUE, cache=FALSE}
+```{r diagnostics3-id, message=FALSE, eval=TRUE, echo=TRUE, cache=FALSE}
 plot(lmerNormal, resid(., type = "pearson") ~ fitted(.) | ID, id = 0.05, 
      adj = -0.3, pch = 20, col = "gray40", 
      ylab ="Standardized (Pearson’s) Residuals", xlab = "Fitted Values")
-plot(lmerNormal, resid(., type = "pearson") ~ fitted(.) | spp_name, id = 0.05, 
-     adj = -0.3, pch = 20, col = "gray40", 
-     ylab ="Standardized (Pearson’s) Residuals", xlab = "Fitted Values")
 ```
-
-<br/>
 <br/>
 
-
-The plots show the standardized residuals (or Pearson’s residuals) versus fitted values and suggests that there are outliers in the data (the names elements in the plots); admittedly, this is rather hard to see for the species.
+The plots show the standardized residuals (or Pearson’s residuals) versus fitted values and suggests that there are outliers in the data (the names elements in the plots); admittedly, this is rather hard to see.
 
 
 ***
-
-
-
-
-<br/>
-<br/>
-
-
