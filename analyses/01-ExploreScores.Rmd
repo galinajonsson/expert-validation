@@ -25,7 +25,7 @@ The **ten** participants scored both periods for each of 52 species' occupancy p
 
 <br/>
 
-### Hypotheses
+### <span style="color: red;">Hypotheses</span>
 
 <br/>
 We will use the answers from the questionnaire to answer/explore the following hypotheses/statements: 
@@ -47,12 +47,13 @@ We will use the answers from the questionnaire to answer/explore the following h
 5. Some species are hard to model in the later time period (1976-2016)      
 
 <br/>
+<br/>
+<br/>
 
-### Format raw scores
-
+## Format raw scores
 <br />
-
 The individual expert-level raw scores needed to reproduce the first code chunk presented below is not in the common domain as it could contain details that disclose the identities of individual experts. For this code chunk, `eval` is set to `FALSE` in this document; nonetheless, the final data set saved in the last line of this chunk, containing all expert scores with randomized identification numbers, is available in the `/data` sub-folder of this repository.   
+<br />
 ```{r format-data, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 # Load required package(s)
 require(tidyr); require(dplyr)
@@ -105,7 +106,7 @@ names(df)[names(df) == 'name'] <- 'question'; names(df)[names(df) == 'value'] <-
 The experts scored both questions on five-point Likert scales (ranging from “strongly agree” to “strongly disagree”) to capture information on experts’ degree of confidence. Below, I re-format the scores numerically from -2 (Strongly disagree) to +2 (Strongly agree). 
 
 
-```{r scale-raw-data, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+```{r scale-raw-data, eval=TRUE, cache=FALSE, echo=TRUE, warning=FALSE, message=FALSE}
 ### Load required package(s)
 require(tidyr); require(dplyr)
 ### Read collated raw expert scores
@@ -122,7 +123,6 @@ df$ID <- ordered(df$ID, levels = c("1", "2", "3", "4", "5", "6", "7",
 
 
 ## Data Visualisation
-
 <br/>
 Let's first look at the distribution of all scores across experts and species per questions referring to each of the two time periods (i.e. pre-1976 and post-1976).
 <br/>
@@ -202,6 +202,7 @@ pA
 
 Next, I visualise the mean and variance for each participant separately for each question (i.e. pre-1976 and post-1976) across the 52 species.
 <br/>
+<br />
 ```{r figureB, eval=TRUE, echo=FALSE, cache=FALSE, warning=FALSE, message=FALSE}
 ### Load required package(s)
 require(tidyr); require(dplyr); require(ggplot2)
@@ -266,14 +267,11 @@ p
 * Most participants' difference between pre-1976 trends' (triangle) and post-1976 trends' (diamond) score variances are around, or just above, 0.05; however, three participants relative variance differences deviate from the generality. Namely, ID01, ID06 and ID10, whose answers tend to be more consistent/unanimous to questions on the later time series while answers for the early part of the time series vary more depending on species.<br/>
 <br />
 
-***
 Next, I also calculate the mean and variance for each species across participants, and measured the unanimity across participants as 1-variance (Figure C).
 of the time series vary more depending on species.<br/>
 <br />
 <br />
-
-
-```{r figureC, eval=TRUE, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE}
+```{r figureC, eval=TRUE, echo=FALSE, cache=FALSE, warning=FALSE, message=FALSE}
 ### Load required package(s)
 require(tidyr); require(dplyr); require(ggplot2); require(RColorBrewer)
 
