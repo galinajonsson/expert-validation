@@ -1,0 +1,224 @@
+---
+title: "02-DataAnalysis"
+author: "Galina M. Jönsson"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+---
+<br />
+
+# Introduction
+
+The purpose of the expert review process is to determine whether the long-term resident butterfly trends produced by our occupancy model formulation are a plausible description of how species changed between 1900-1976, and reflects existing knowledge for species post-1976.
+<br />
+The current script contains all code and results for the statistical analyses of the experts' scores. Namely, we fit a linear mixed-effects model to seek more definitive answers to the <span style="color: red;">**questions above figures suggest (see "01-ExploreResults.Rmd" for details).** </span>
+<br />
+We use a mixed effects model to test whether time period (i.e., 1900-1976 vs. 1976-2016) effects expert scores (Agresti, 2002; Gibson et al., 2011; Norman, 2010); in other words, whether the experts have scored the two periods differently. We therefore fit the model with time period as a fixed effect, and both taxon and respondent ID as random effects. 
+<br />
+<br />
+<br />
+
+# Model Fitting & Selection
+
+First, we determine which distribution family best explains the distribution of our raw data (i.e., the expert scores). To do so, we fit two linear mixed-effects model with identical fixed and random effect structures, but different distributions: Normal (Gaussian) and Poisson. The models are fitted with time period as a fixed effect, and both taxon and respondent ID as random effects. We use analysis-of-variance (anova) to test the models against one another. Note that we do not re-code the expert response scores from the default scale (1-5) to ranging from -2 (strongly disagree) to +2 (strongly agree) because Poisson cannot handle negative values.    
+
+<br />
+```{r read-data-generate-models, message=FALSE, warning=FALSE, eval=TRUE, echo=TRUE, cache=FALSE}
+### Load required package(s)
+require(lme4)
+
+####################### Read and tidy raw collated data
+### Read collated raw expert scores
+df <- read.csv("../data/ExperstScores_Raw.csv")
+# Subset relevant data columns and give "question" more informative names
+df <- na.omit(df[, c("spp_name", "ID", "question", "score")])
+# Give "question" more informative names
+names(df)[names(df) == "question"] <- "Time_Period"
+df[df$'Time_Period'=="q1", "Time_Period"] <- "1900-1976"
+df[df$'Time_Period'=="q2", "Time_Period"] <- "1976-2015"
+
+
+####################### Fit competing linear mixed-effects models with different distributions
+# Normal (Gaussian) 
+lmerNormal <- lmer(score ~ Time_Period + (1|spp_name) + (1|ID), data = df)
+# Poisson
+glmerPoisson <- glmer(score ~ Time_Period + (1|spp_name) + (1|ID), 
+                      data = df, family = poisson)
+
+# compare models
+anova(glmerPoisson, lmerNormal)
+```
+<br/>
+The model comparison shows that the normal (Gaussian) model has a significantly better fit to the data compared with the Poisson model. The analysis of variance table for the two fitted model objects shows their AIC, BIC, and LogLik scores, showing:
+
+* The the normal (Gaussian) model shows lower values for AIC and BIC, which indicate better model fit. For AIC and BIC, a general rule of thumb is that more than 2 unit differences between models are considered different.    
+* Similarly, the LogLik score for the normal (Gaussian) model has a less negative value, indicating better fit.    
+* Although the $x^{2}$ test isn't fully appropriate, nor reliable (more details below), for mixed effects models, the very small p-value (<< 0.05) is indicative of a real difference between the two models.   
+
+We will therefore continue with the normal (Gaussian) model. 
+
+<br />
+<br />
+<br />
+
+# Testing mixed models parameters
+
+<span style="color: red;">*Mixed model parameters do not have nice asymptotic distributions to test against. (i.e., the parameters do not asymptotically converge to known distributions), complicating the inferences which can be made from mixed models.*
+
+*One source of the complexity is a penalty factor (shrinkage) which is applied to the random effects in the calculation of the likelihood (or restricted likelihood) function the model is optimized to. This results in distributions which are no longer chi squared or F. This penalty factor also complicates determining the degrees of freedom to associate with the estimate of a random effect. For example a variance parameter, say r1, maybe estimated from twenty levels in a model. The design matrix used to estimate the model parameters uses twenty indicator variables for these twenty levels. There is only one parameter for these twenty indicators in the model. We would typically associate one degree of freedom with one estimated value. The design matrix used includes the twenty indicator variables and we would normally associate twenty degrees of freedom with these twenty indicators. Since these twenty indicators have a shrinkage factor applied to them, we do not really need twenty degrees of freedom. So what would be the correct degrees of freedom to use for the cost to estimate this one variance parameter? One? twenty? Something in between? Unfortunately there is no generally accepted theory which provides an answer to this question. Assuming we can find a good value for the degrees of freedom, we still can not count on our test statistic (from likelihood ratio tests and the like) to be F or chi distributed with the penalty applied to the model.*
+
+*Another source of complications is testing the significance of a variance parameter, θ. Since the variance must be greater than or equal to zero, a test of zero is on the border of the parameter space. Tests of parameters are valid only on the interior of their space and not on the border.*
+
+*The correlation structure within the data complicates using bootstrap procedures to test these statistics which do not have known distributions. Parametric bootstraps which can more easily account for the correlation in the model are more typically used for inference in mixed models than bootstraps, which are non-parametric.*</span>
+
+
+<span style="color: red;">We use a mixed effects model to test whether time period (i.e., 1900-1976 vs. 1976-2016) effects expert scores (Agresti, 2002; Gibson et al., 2011; Norman, 2010); in other words, whether the experts have scored the two periods differently. We therefore fit the model with time period as a fixed effect, and both taxon and respondent ID as random effects. We tested whether scores differed for the two time periods using a type II Wald χ2 test  . All code used to generate these analyses are available at “https://github.com/galinajonsson/LepUK_ExpertReview”.</span>
+
+<br/>
+<br/>
+<br/>
+
+
+## Time period (fixed) effect
+
+First, we re-code response scores back to the -2 to 2 scale because normal (Gaussian) models can handle negative values. We then inspect the model output. See below for testing whether the fixed effect is significant (i.e., whether scores for the two time periods differ) and plot the results. 
+<br/>
+```{r fixed-effect-plot, message=FALSE, eval=TRUE, warning=FALSE, echo=TRUE, cache=FALSE}
+### Load required package(s)
+require(lme4); require(car); require(effects); require(glmmTMB)
+
+### re-code responses from -2 (strongly disagree) to +2 (strongly agree)
+df$score <- df$score-3
+
+# Re-generate the Normal (Gaussian) models with re-coded scores
+lmerNormal <- lmer(score ~ Time_Period + (1|spp_name) + (1|ID), data = df)
+
+# inspect results
+summary(lmerNormal)
+
+# Plot results
+effects_ok <- (requireNamespace("effects") && getRversion() >= "3.6.0")
+if (effects_ok) {
+plot(allEffects(lmerNormal), main= "Figure A: Time period effect plot" )
+}
+```
+<br/>
+The model summary output indicates that scores differ between the two time periods such that pre-1976 trends are lower than post-1976 scores. Similarly, the effect plots, including their non-overlapping error bars, agree.
+<br/>
+<br/>
+
+
+### Hypothesis testing: Time period effect
+
+We explicitly test whether scores differ between the two time periods using a type II Wald χ2 test.
+<br/>
+```{r test-fixed-effect, message=FALSE, eval=TRUE, warning=FALSE, echo=TRUE, cache=FALSE}
+car::Anova(lmerNormal)
+```
+<br/>
+The type II Wald chi square test confirms that scores for Pre-1976 trends are significantly lower than post-1976 scores: on average, pre-1976 trend scores are 0.70428 lower than post-1976 scores.    
+
+We now look into a few different model diagnostics to decipher what's up with our random effect. 
+<br/>
+<br/>
+<br/>
+
+## <span style="color: red;">Species ID (random) effect</span>
+
+## <span style="color: red;">Participant ID (random) effect</span>
+
+
+**Useful resources:**
+* https://slcladal.github.io/regression.html#2_Mixed-Effects_Regression  
+* Book: J. C. Pinheiro & D. M. Bates. 2000. *Mixed-Effects Models in S and S-PLUS*, **Chapter 1.1**. Springer.
+
+<br/>
+First, we extract the conditional modes of the random effects from the fitted model object. As our fitted model is a linear mixed model, the conditional modes are also the conditional means.
+
+Second, we use the extracted modes to generate diagnostic plots focusing on the random effect structure. Namely, we draw quantile-quantile plots of a sample against a theoretical distribution, possibly conditioned on other variables.
+
+```{r diagnostics1, message=FALSE, eval=TRUE, echo=TRUE, cache=FALSE, fig.show="hold"}
+# Load required package(s)
+require(ggplot2); require(lattice)
+
+# Extract the modes of the random effects
+rr1 <- ranef(lmerNormal)
+
+# "Draw qq plots of a sample against a theoretical distribution, possibly conditioned on other variables."
+par(mfrow=c(2,1))
+dotplot(rr1)$spp_name
+qqmath(rr1)$spp_name
+#dotplot(rr1)$ID
+#qqmath(rr1)$ID
+```
+<br />
+**General trends:**  
+
+* There appears to be differences among both participants and species. 
+    + *Species*: also look as if some are generally 'easier', whilst others are 'hard', to model for both time periods as evident from some scoring high and other low across periods and participants. Which are admittedly hard to see on these plots so let's move on. <br/>
+
+
+```{r diagnostics1-ID, message=FALSE, eval=TRUE, echo=TRUE, cache=FALSE, fig.show="hold"}
+# "Draw qq plots of a sample against a theoretical distribution, possibly conditioned on other variables."
+dotplot(rr1)$ID
+qqmath(rr1)$ID
+```
+<br />
+**General trends:**  
+
+* There appears to be differences among both participants and species. 
+    + *Participants*: Two extremes are 09 and 06, which tend to score low and high, respectively, across species and time series. <br/>
+
+<br />
+<br />
+<br />
+***
+
+<br/>
+<br/>
+```{r diagnostics2, message=FALSE, eval=TRUE, echo=TRUE, cache=FALSE}
+plot(lmerNormal, ID ~ resid(.), abline = 0, 
+     ylab ="Participant ID", xlab = "Residuals") # generate diagnostic plots
+plot(lmerNormal, spp_name ~ resid(.), abline = 0, 
+     ylab ="Species", xlab = "Residuals") # generate diagnostic plots
+```
+<br/>
+<br/>
+The plots show that there are some outliers (points outside the boxes) and that the variability differs between both participants and species; we therefore examine both participants' and species' standardized residuals (or Pearson’s residuals) versus fitted values in isolation.
+
+* Note the -3 residual for participant 05 (suspected mistake; Figure 6). 
+* Neither participant 04 nor 10 (also suspected mistakes; Figure 6) look like they have 'extreme' residuals. <br/>
+
+***
+
+<br/>
+
+
+```{r diagnostics3, message=FALSE, eval=TRUE, echo=TRUE, cache=FALSE}
+plot(lmerNormal, resid(., type = "pearson") ~ fitted(.) | ID, id = 0.05, 
+     adj = -0.3, pch = 20, col = "gray40", 
+     ylab ="Standardized (Pearson’s) Residuals", xlab = "Fitted Values")
+plot(lmerNormal, resid(., type = "pearson") ~ fitted(.) | spp_name, id = 0.05, 
+     adj = -0.3, pch = 20, col = "gray40", 
+     ylab ="Standardized (Pearson’s) Residuals", xlab = "Fitted Values")
+```
+
+<br/>
+<br/>
+
+
+The plots show the standardized residuals (or Pearson’s residuals) versus fitted values and suggests that there are outliers in the data (the names elements in the plots); admittedly, this is rather hard to see for the species.
+
+
+***
+
+
+
+
+<br/>
+<br/>
+
+
