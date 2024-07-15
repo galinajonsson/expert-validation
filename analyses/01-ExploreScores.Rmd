@@ -127,7 +127,7 @@ df$ID <- ordered(df$ID, levels = c("1", "2", "3", "4", "5", "6", "7",
 Let's first look at the distribution of all scores across experts and species per questions referring to each of the two time periods (i.e. pre-1976 and post-1976).
 <br/>
 <br/>
-```{r figureA, eval=TRUE, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE}
+```{r figureA, eval=TRUE, echo=FALSE, cache=FALSE, warning=FALSE, message=FALSE}
 require("dplyr"); require("RColorBrewer"); require("R.utils"); require("ggplot2"); require("wesanderson")
 
 # new response column based on multiple conditions:
@@ -202,7 +202,7 @@ pA
 
 Next, I visualise the mean and variance for each participant separately for each question (i.e. pre-1976 and post-1976) across the 52 species.
 <br/>
-```{r figureB, eval=TRUE, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE}
+```{r figureB, eval=TRUE, echo=FALSE, cache=FALSE, warning=FALSE, message=FALSE}
 ### Load required package(s)
 require(tidyr); require(dplyr); require(ggplot2)
 
