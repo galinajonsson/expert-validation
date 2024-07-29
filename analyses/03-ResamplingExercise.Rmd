@@ -34,3 +34,81 @@ You could back this up with a resampling exercise. For n %in% 2:10 select n expe
 
 
 <br/>
+
+
+
+
+
+The experts scored both questions on five-point Likert scales (ranging from “strongly agree” to “strongly disagree”) to capture information on experts’ degree of confidence. Below, I re-format the scores numerically from -2 (Strongly disagree) to +2 (Strongly agree). 
+
+
+```{r scale-raw-data, eval=TRUE, cache=FALSE, echo=TRUE, warning=FALSE, message=FALSE}
+### Load required package(s)
+require(tidyr); require(dplyr)
+### Read collated raw expert scores
+df <- read.csv("../data/ExperstScores_Raw.csv")
+### re-code responses from -2 (strongly disagree) to +2 (strongly agree)
+df$score <- df$score-3
+# specify columns to include (i.e., exclude com_name)
+df <- df[,c("spp_name", "ID", "question", "score")]
+### specify variable "ID" as discrete factor and order level 
+#df$ID <- as.factor(as.character(df$ID))
+#df$ID <- ordered(df$ID, levels = c("1", "2", "3", "4", "5", "6", "7",
+#                                     "8", "9", "10"))
+```
+<br/>
+<br/>
+
+
+For n %in% 2:10 select n experts with replacement and recalculate the scores. Calculate one metric about the inter-expert variation and see how this settles down as n increases. Do this 100 times.*
+
+```{r resample-scores, eval=TRUE, cache=FALSE, echo=TRUE, warning=FALSE, message=FALSE}
+### Create empty df to fill with two added columns for number of experts re-sampled and sample number
+df.resamp <- data.frame(spp_name = as.character(),
+                        ID = as.integer(),
+                        question  = as.character(),
+                        score = as.numeric(),
+                        ID_sample = as.numeric(),
+                        sample = as.numeric(),
+                        stringsAsFactors=FALSE) 
+
+### Add two empty columns for number of experts re-sampled and sample number to raw scores
+df$ID_sample <- as.numeric(NA)
+df$sample <- as.numeric(NA)
+
+
+### Loop through for each of 2 to 10 experts
+for(i in 2:10) {
+  ### And for each, do the below 100 times
+  for(j in 1:100){
+    n <- sample(1:10, i, replace=T) # select i experts with replacement
+    # Create a temporary df.resamp to populate
+    df.resamp_temp <-  data.frame(spp_name = as.character(),
+                        ID = as.integer(),
+                        question  = as.character(),
+                        score = as.numeric(),
+                        ID_sample = as.numeric(),
+                        sample = as.numeric(),
+                        stringsAsFactors=FALSE) 
+    ### Subset each of the i experts sampled above
+    for(k in 1:length(n)){
+      df.resamp_temp <- rbind(df.resamp_temp, subset(df, ID == n[k]))
+      }
+    df.resamp_temp$ID_sample <- i # Specify the number of experts sampled (2-10)
+    df.resamp_temp$sample <- j # Specify the sampling number (1-100)
+    df.resamp <- rbind(df.resamp, df.resamp_temp) # Add to final dataset
+  }
+}
+
+### Save resampled expert scores as csv.file
+#write.csv(df.resamp, file="../outputs/df_resamp.csv", row.names=F)
+```
+
+
+
+
+*For n %in% 2:10 select n experts with replacement and recalculate the scores. Calculate one metric about the inter-expert variation and see how this settles down as n increases. Do this 100 times.*
+
+
+
+
