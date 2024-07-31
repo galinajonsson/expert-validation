@@ -1,5 +1,5 @@
 ---
-title: "02-ResamplingExercise"
+title: "03-ResamplingExercise"
 author: "Galina M. Jönsson"
 date: "`r Sys.Date()`"
 output: 
@@ -32,37 +32,44 @@ It is this: If there had been fewer than 10 experts, the scores would have been 
 You could back this up with a resampling exercise. For n %in% 2:10 select n experts with replacement and recalculate the scores. Calculate one metric about the inter-expert variation and see how this settles down as n increases. Do this 100 times.*
 
 
+Having generated 100 samples of a total of each of two to ten expert scores (with replacement), here, I calculate metrices about the inter-expert variation and see how these settle down (or not) as the number of experts sampled increases. Namely, I look at the distribution of 
+
+* **Unanimity**:    
+* **Coefficient of Variation** is the ratio of the standard deviation to the mean, making it independent of the units, and hence, useful when comparing data sets with different units or, as here, widely different means (as expected from e.g., a sample of two expert scores vs. a sample of ten).       
+
+The unanimity metric and the coefficient of variation are based on the variance and the standard deviation, respectively. Hence, the choise of these two metrics about the inter-expert variation capture both the average degree to which each point differs from the mean (variance) and the total spread from the mean (standard deviation).  
+
+The standard deviation is a statistic that measures the dispersion of a data set relative to its mean. It is used to determine the spread of values in a single data set rather than to compare different units.
+
+
+
+
+
+In short, the standard deviation measures how far the average value lies from the mean, whereas the coefficient of variation measures the ratio of the standard deviation to the mean.
+2
 
 <br/>
 
+## Re-sampling exercise
 
 
+The experts scored both questions on five-point Likert scales (ranging from “strongly agree” to “strongly disagree”) to capture information on experts’ degree of confidence. Below, I re-format the raw expert scores numerically from -2 (Strongly disagree) to +2 (Strongly agree). The resamling is straight forward: for each possible number of total experts between 2 and 10, I randomly sample that number of real expert IDs (with replacement) and collate their scores. I repeat this 100 times. 
 
-
-The experts scored both questions on five-point Likert scales (ranging from “strongly agree” to “strongly disagree”) to capture information on experts’ degree of confidence. Below, I re-format the scores numerically from -2 (Strongly disagree) to +2 (Strongly agree). 
-
-
-```{r scale-raw-data, eval=TRUE, cache=FALSE, echo=TRUE, warning=FALSE, message=FALSE}
+```{r resample-scores, eval=FALSE, cache=FALSE, echo=TRUE, warning=FALSE, message=FALSE}
 ### Load required package(s)
 require(tidyr); require(dplyr)
-### Read collated raw expert scores
+
+### Read and tidy collated raw expert scores 
 df <- read.csv("../data/ExperstScores_Raw.csv")
 ### re-code responses from -2 (strongly disagree) to +2 (strongly agree)
 df$score <- df$score-3
 # specify columns to include (i.e., exclude com_name)
 df <- df[,c("spp_name", "ID", "question", "score")]
-### specify variable "ID" as discrete factor and order level 
-#df$ID <- as.factor(as.character(df$ID))
-#df$ID <- ordered(df$ID, levels = c("1", "2", "3", "4", "5", "6", "7",
-#                                     "8", "9", "10"))
-```
-<br/>
-<br/>
 
 
-For n %in% 2:10 select n experts with replacement and recalculate the scores. Calculate one metric about the inter-expert variation and see how this settles down as n increases. Do this 100 times.*
+######################################################
+################## Re-sampling 
 
-```{r resample-scores, eval=TRUE, cache=FALSE, echo=TRUE, warning=FALSE, message=FALSE}
 ### Create empty df to fill with two added columns for number of experts re-sampled and sample number
 df.resamp <- data.frame(spp_name = as.character(),
                         ID = as.integer(),
@@ -72,10 +79,8 @@ df.resamp <- data.frame(spp_name = as.character(),
                         sample = as.numeric(),
                         stringsAsFactors=FALSE) 
 
-### Add two empty columns for number of experts re-sampled and sample number to raw scores
-df$ID_sample <- as.numeric(NA)
-df$sample <- as.numeric(NA)
-
+### Add two empty columns to raw scores df to eaisier populate df.resamp
+df$ID_sample <- as.numeric(NA); df$sample <- as.numeric(NA)
 
 ### Loop through for each of 2 to 10 experts
 for(i in 2:10) {
@@ -103,11 +108,203 @@ for(i in 2:10) {
 ### Save resampled expert scores as csv.file
 #write.csv(df.resamp, file="../outputs/df_resamp.csv", row.names=F)
 ```
+<br />
+
+Having generated 100 samples for each of two to ten expert scores (with replacement), here, I calculate two metrics about the inter-expert variation (CV and unanimity), and visualise the resulting distributions (see reuslts).     
+
+<br />
+```{r summarise-resampled-scores, eval=TRUE, cache=FALSE, echo=TRUE, warning=FALSE, message=FALSE}
+### Load required package(s)
+require(tidyr); require(dplyr); require(ggplot2); require(ggridges); require(ggpubr)
+
+### Read re-sampled expert scores
+resamp.df <- read.csv("../outputs/df_resamp.csv")
+
+### Summarise relevant stats
+resamp.sum <- as.data.frame(na.omit(resamp.df) %>% 
+                              group_by(ID_sample, sample) %>% 
+                              summarise(Mean = mean(score), 
+                              SD = sd(score),
+                              CV = (sd(score) / mean(score) * 100),
+                              Variance = var(score),
+                              Unanimity = (1 - (var(score)))))
+
+### specify variable "ID_sample" as discrete factor and order level 
+resamp.sum$ID_sample <- as.factor(as.character(resamp.sum$ID_sample))
+resamp.sum$ID_sample <- ordered(resamp.sum$ID_sample, 
+                               levels = c("1", "2", "3", "4", "5", "6", "7",
+                                          "8", "9", "10"))
+                
+###########################################################
+################## Distribution of Coefficient of Variation 
+# Remove outlier sample# 92 (CV= -7335.44107; Mean=-0.019, SD=1.411)
+### Box Plot
+CVp1 <- subset(resamp.sum, CV >-7000) %>% 
+  group_by(ID_sample) %>%
+  mutate(mean_OVR = mean(CV)) %>% 
+  ggplot(aes(x=CV, y=ID_sample, colour = ID_sample, fill = ID_sample)) +
+  geom_boxplot(alpha=0.3) + 
+  geom_vline(xintercept = 0, color =c("black")) + theme_minimal() +
+  theme(legend.position = "none", axis.title.y = element_blank()) + ggtitle("")
+### Ridgeline Chart
+CVp2 <- subset(resamp.sum, CV >-7000) %>% 
+  group_by(ID_sample) %>%
+  mutate(mean_OVR = mean(CV)) %>% 
+  ggplot(aes(x=CV, y=ID_sample, colour = ID_sample, fill = ID_sample)) +
+  geom_density_ridges(alpha = 0.15) + 
+  geom_vline(xintercept = 0, color =c("black")) + theme_minimal() +
+  theme(legend.position = "none", axis.title.y = element_blank()) + ggtitle("")
+
+### Create title and subtitle text grobs
+CVtgrob1 <- text_grob("Distribution of Coefficient of Variation By Expert Number", size = 14)
+CVtitle_1 <- as_ggplot(CVtgrob1) + theme(plot.margin = margin(0,-4,0,1, "cm")) # Draw the text
+### Plot 
+CV <- ggarrange(CVtitle_1, NULL, CVp1, CVp2, ncol = 2,nrow = 2, 
+          labels = c("", "", "(A)", "(B)"), heights = c(0.5,5))
 
 
+###########################################################
+################## Distribution of Unanimity
+### Box Plot
+Up1 <- resamp.sum %>% 
+  group_by(ID_sample) %>%
+  mutate(mean_OVR = mean(Unanimity)) %>% 
+  ggplot(aes(x=Unanimity, y=ID_sample, colour = ID_sample, fill = ID_sample)) +
+  geom_boxplot(alpha=0.3) + theme_minimal() +
+  geom_vline(xintercept = 0, color =c("black")) +
+  theme(legend.position = "none", axis.title.y = element_blank()) + ggtitle("")
+### Ridgeline Chart
+Up2 <- resamp.sum %>% 
+  group_by(ID_sample) %>%
+  mutate(mean_OVR = mean(Unanimity)) %>% 
+  ggplot(aes(x=Unanimity, y=ID_sample, colour = ID_sample, fill = ID_sample)) +
+  geom_density_ridges(alpha = 0.15) + theme_minimal() + 
+  geom_vline(xintercept = 0, color =c("black")) +
+  theme(legend.position = "none", axis.title.y = element_blank()) + ggtitle("")
+
+### Create title and subtitle text grobs
+Utgrob1 <- text_grob("Distribution of Unanimity By Expert Number", size = 14)
+Utitle_1 <- as_ggplot(Utgrob1) + theme(plot.margin = margin(0,-1.5,0,1, "cm")) # Draw the text
+### Plot 
+U <- ggarrange(Utitle_1, NULL, Up1, Up2, ncol = 2,nrow = 2, 
+          labels = c("", "", "(A)", "(B)"), heights = c(0.5,5))
+```
+<br />
+
+I repeat this (i.e., calculate CV and unanimity) separately for each of the two time series, and visualise the resulting distributions (see reuslts).     
+
+<br />
+```{r summarise-resampled-scores-byTP, eval=TRUE, cache=FALSE, echo=TRUE, warning=FALSE, message=FALSE}
+### Load required package(s)
+require(tidyr); require(dplyr); require(ggplot2); require(ggridges); require(ggpubr)
+
+### Read re-sampled expert scores
+resamp.df <- read.csv("../outputs/df_resamp.csv")
+
+### summarise relevant metrics by time period too!
+resamp.sum2 <- as.data.frame(na.omit(resamp.df) %>% 
+                       group_by(question, ID_sample, sample) %>% 
+                       summarise(Mean = mean(score), 
+                                 SD = sd(score),
+                                 CV = (sd(score) / mean(score) * 100),
+                                 Variance = var(score),
+                                 Unanimity = (1 - (var(score)))))
+
+### specify variable "ID_sample" as discrete factor and order level 
+resamp.sum2$ID_sample <- as.factor(as.character(resamp.sum2$ID_sample))
+resamp.sum2$ID_sample <- ordered(resamp.sum2$ID_sample, 
+                               levels = c("1", "2", "3", "4", "5", "6", "7",
+                                          "8", "9", "10"))
+# Make "question" variable more informative
+names(resamp.sum2)[names(resamp.sum2) == "question"] <- "Time_Period"
+resamp.sum2[resamp.sum2$'Time_Period'=="q1", "Time_Period"] <- "1900-1976"
+resamp.sum2[resamp.sum2$'Time_Period'=="q2", "Time_Period"] <- "1976-2015"
 
 
-*For n %in% 2:10 select n experts with replacement and recalculate the scores. Calculate one metric about the inter-expert variation and see how this settles down as n increases. Do this 100 times.*
+###########################################################
+################## Distribution of Coefficient of Variation 
+### Box Plot
+CVp1B <- resamp.sum2 %>%   
+  group_by(ID_sample, Time_Period) %>%
+  mutate(mean_OVR = mean(CV)) %>% 
+  ggplot(aes(x=CV, y=ID_sample, colour = ID_sample, fill = ID_sample)) +
+  geom_boxplot(alpha=0.3) + facet_grid(~Time_Period) +
+  geom_vline(xintercept = 0, color =c("black")) + theme_minimal() +
+  theme(legend.position = "none", axis.title.y = element_blank()) +
+  ggtitle("Distribution of Coefficient of Variation By Expert Number and Time Period")
+
+###########################################################
+################## Distribution of Unanimity
+### Box Plot
+Up1B <- resamp.sum2 %>% 
+  group_by(ID_sample, Time_Period) %>%
+  mutate(mean_OVR = mean(Unanimity)) %>% 
+  ggplot(aes(x=Unanimity, y=ID_sample, colour = ID_sample, fill = ID_sample)) +
+  geom_boxplot(alpha=0.3) +
+  facet_grid(~Time_Period) +
+  geom_vline(xintercept = 0, color =c("black")) +
+  theme_minimal() +
+  theme(legend.position = "none", axis.title.y = element_blank()) + ggtitle("")
+### Ridgeline Chart
+Up2B <- resamp.sum2 %>% 
+  group_by(ID_sample, Time_Period) %>%
+  mutate(mean_OVR = mean(Unanimity)) %>% 
+  ggplot(aes(x=Unanimity, y=ID_sample, colour = ID_sample, fill = ID_sample)) +
+  geom_density_ridges(alpha = 0.15) + geom_vline(xintercept = 0, color =c("black")) +
+  facet_grid(~Time_Period) + theme_minimal() +
+  theme(legend.position = "none", axis.title.y = element_blank()) + ggtitle("")
+### Create title and subtitle text grobs
+Utgrob1 <- text_grob("Distribution of Unanimity by Expert Number and Time Period", size = 14)
+Utitle_1 <- as_ggplot(Utgrob1) + theme(plot.margin = margin(0,-4,0,1, "cm")) # Draw the text
+
+### Plot 
+U2 <- ggarrange(Utitle_1, NULL, Up1B, Up2B, ncol = 2,nrow = 2, 
+                labels = c("", "", "(A)", "(B)"), heights = c(0.5,5))
+```
+<br />
+<br />
+
+
+## Results {.tabset .tabset-pills}
+
+
+### Coefficient of Variation
+```{r resampled-scores-CV, eval=TRUE, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+CV
+```
+
+
+### Unanimity
+```{r resampled-scores-U, eval=TRUE, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+U
+```
+
+### Coefficient of Variation by Time Period
+```{r resampled-scores-CV2, eval=TRUE, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+CVp1B
+```
+
+### Unanimity by Time Period
+```{r resampled-scores-U2, eval=TRUE, cache=FALSE, echo=FALSE, warning=FALSE, message=FALSE}
+U2
+```
+
+## {-}
+
+The coefficient of variation (CV) indicates the size of a standard deviation in relation to its mean, where higher the coefficient of variation indicates greater dispersion levels around the mean. It is clear that, although all expert numbres (2-10) overlap, indicating that even with only two expert scores, these tend get the true CV of the data about right. However, it is clear that the greater the number of experts, the fewer very high CVs where dispersion levels around the mean are significantly greater than when using ten experts (as indicated by longer *right hand tails* and greater numbers of outliers with fewer experts). 
+
+The unanimity scores, similarly, show that expert scores these tend be about right (overlapping boxplots and similar means), but the spread of unanimity scores decreases with more experts, indicating fewer extremes. 
+
+**@ Nick, shitter, mis unanimity even relevan here as the contraint lines will differ?** 
+
+
+*When the mean value is close to zero, the CV becomes very sensitive to small changes in the mean. Using the example above, a notable flaw would be if the expected return in the denominator is negative or zero. In this case, the coefficient of variation could be misleading.*
+
+<br />
+<br />
+
+## Conclusions 
+
 
 
 
