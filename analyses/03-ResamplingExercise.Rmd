@@ -12,12 +12,12 @@ output:
 
 ## Introduction
 
-<br />
+<br/>
 Effort was made to ensure that the experts represented different professional backgrounds (research, conservation, curation, etc.) to limit systematic bias by averaging out individual subjectivity (Morgan, 2014). We approached the experts via email and invited them to participate in this review. Ten experts agreed to sit on the evaluation panel.    
 
 Given the need to recruit multiple experts representing different individual and professional backgrounds, and that the total pool of candidate experts was felt to be small, ensuring high expert recruitment rates was a priority to limit systematic bias by averaging out individual subjectivity. We approached the experts via email and invited them to participate in this review. Ten experts agreed to sit on the evaluation panel.    
 
-There was much variation between individual experts’ mean scores and variances **(Figure 4.A)**. Humans are not perfect statistical processors, and when facing uncertainty tend unconsciously to use cognitive heuristics. As a result, opinions are often biased by, for example, attaching undue weight to the evidence most recently encountered . An in-depth review of all potential sources of bias was not within the scope of our study. 
+There was much variation between individual experts’ mean scores and variances **(e.g., see manuscript Figure 4.A)**. Humans are not perfect statistical processors, and when facing uncertainty tend unconsciously to use cognitive heuristics. As a result, opinions are often biased by, for example, attaching undue weight to the evidence most recently encountered . An in-depth review of all potential sources of bias was not within the scope of our study. 
 
 
 **Aims of exercise**
