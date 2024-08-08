@@ -199,10 +199,8 @@ pA
 <br/>
 <br/>
 
-
 Next, I visualise the mean and variance for each participant separately for each question (i.e. pre-1976 and post-1976) across the 52 species.
 <br/>
-<br />
 ```{r figureB, eval=TRUE, echo=FALSE, cache=FALSE, warning=FALSE, message=FALSE}
 ### Load required package(s)
 require(tidyr); require(dplyr); require(ggplot2)
@@ -213,18 +211,15 @@ df$question <- as.factor(df$question)
 ######################################################################
 ### Mean score against variance per participant ID
 
-
 ### Subset and summarise response data
 df2 <- as.data.frame(na.omit(df[, c("ID", "question", "score")]) 
                      %>% group_by(ID, question) 
                      %>% summarise(Mean = mean(score), Variance = (var(score))))
-
 ### Define colour blind friendly palette
 cbPalette <- c(#"#000000",  # "#999999", 
                "grey36", "#E69F00", "#009E73", "#66CC99",
                "#F0E442","#56B4E9", "#0072B2",  "#9999CC",
                "#CC79A7", "#D55E00") # , "#9E0142")
-
 ### Graph
 p <- ggplot() + 
   geom_line(aes(Mean, Variance, group = ID), df2, color="grey") + # Line between same species' time periods
@@ -252,6 +247,7 @@ p
 ```
 <br/>
 <br/>
+
 **General trends: Mean Scores**  
 
 * On average across species, all participants score post-1976 trends (diamond) higher than pre-1976 trends (triangle). 
@@ -267,9 +263,8 @@ p
 * Most participants' difference between pre-1976 trends' (triangle) and post-1976 trends' (diamond) score variances are around, or just above, 0.05; however, three participants relative variance differences deviate from the generality. Namely, ID01, ID06 and ID10, whose answers tend to be more consistent/unanimous to questions on the later time series while answers for the early part of the time series vary more depending on species.<br/>
 <br />
 
-Next, I also calculate the mean and variance for each species across participants, and measured the unanimity across participants as 1-variance (Figure C).
-of the time series vary more depending on species.<br/>
-<br />
+Next, I also calculate the mean and variance across each species for each of the two time periods across participants (Figure C below), measuring the unanimity across participants as 1-variance (Figure C). This may help use deipher whether the scores for each period of the time series vary depending on species ID.<br/>
+
 <br />
 ```{r figureC, eval=TRUE, echo=FALSE, cache=FALSE, warning=FALSE, message=FALSE}
 ### Load required package(s)
@@ -286,15 +281,12 @@ for(i in 1:nrow(constraintLine)){ # For each row, create a vector with ten (10) 
   constraintLine$mean[[i]] <- mean(temp) # Use vector to find mean
   constraintLine$unanimity[[i]] <- 1-var(temp) # and unanimity
 }
-
 ### Subset and summarise response data
 df3 <- as.data.frame(na.omit(df[, c("spp_name", "question", "score")]) %>% 
                        group_by(spp_name, question) %>% 
                        summarise(Mean = mean(score), Unanimity = (1 - (var(score)))))
-
 # Define colours
 cols <- c("#E69F00", "#009E73")
-
 ### Graph
 q <- ggplot(df3, aes(Mean, Unanimity)) + 
   geom_line(aes(group = spp_name), color="grey") + # Line between same species' time periods
@@ -302,8 +294,7 @@ q <- ggplot(df3, aes(Mean, Unanimity)) +
               aes(group = question, shape=question, colour=question),
               size=3.5) + # use jitter over geom_points to reveal overlapping points
   geom_line(aes(mean, unanimity), constraintLine) + # Add constraint line
-  scale_shape_manual("Time Period", 
-                     values=c(18,20),
+  scale_shape_manual("Time Period", values=c(18,20),
                      labels = c("1900-1976", "1976-2016")) +
   scale_colour_manual("Time Period", values=cols,
                       labels = c("1900-1976", "1976-2016")) +
@@ -313,9 +304,97 @@ q <- ggplot(df3, aes(Mean, Unanimity)) +
        subtitle = "Summarised across expert respondents for each time period") +
   theme(legend.key = element_rect(fill = "white", color = NA)) +
   theme(panel.background=element_rect(fill="white", colour="black")) +
-  coord_cartesian(ylim=c(-1.6, 1)) +
-  theme(text = element_text(size = 14))   
+  coord_cartesian(ylim=c(-1.6, 1)) + theme(text = element_text(size = 14))   
 q
 ```
+<br />
+<br />
+Although it seems that five or sixe species' early trends stands out as having very low scores with much agreement among experts (upper left corner), it may be more insightful to plot these results as a set of histograms. This is what I'll do below:
+
+<br />
+```{r figureD, eval=TRUE, echo=FALSE, cache=FALSE, warning=FALSE, message=FALSE}
+# Load required package(s)
+require(tidyr); require(dplyr); require(ggplot2); require(RColorBrewer)
+
+### To facetwrap, I'll need to restructure the df 
+# Separate into two dfs
+df3mean <- df3[,c("spp_name", "question", "Mean")]
+# New column indicating score ID
+df3mean$Difference <- 'Mean'
+# Rename "Mean_diff" column to identical as Unanimity df (below)
+names(df3mean)[names(df3mean) == "Mean"] <- "value"
+### Repeat for Unanimity
+df3unanimity <- df3[,c("spp_name", "question", "Unanimity")]  
+df3unanimity$Difference <- 'Unanimity'
+names(df3unanimity)[names(df3unanimity) == "Unanimity"] <- "value"
+# combine the two data frames
+df3b <- rbind(df3mean, df3unanimity)
+
+# Vectorise species' names
+spp <- as.factor(unique(df3$spp_name))
+# Empty data frame to populate
+df4 <- data.frame(spp_name = spp,
+                  name = as.character(rep("Difference"), 52),
+                  Mean_diff = as.numeric(rep(NA, 52)),
+                  Unanimity_diff = as.numeric(rep(NA, 52)))
+
+# Loop through species and subtract post-1976 scores from pre-1976 scores
+for(i in 1:length(spp)){
+  temp <- df3[df3$spp_name == paste0(spp[i]), ]
+  df4[df4$spp_name == paste0(spp[i]), "Mean_diff"] <- ((temp[temp$question == "q1",]$Mean) - 
+                                                         (temp[temp$question == "q2",]$Mean))
+  df4[df4$spp_name == paste0(spp[i]), "Unanimity_diff"] <- ((temp[temp$question == "q1",]$Unanimity) - 
+                                                              (temp[temp$question == "q2",]$Unanimity))
+}
+
+# Separate into two dfs
+df4mean <- df4[,c("spp_name", "name", "Mean_diff")]
+# New column indicating score ID
+df4mean$Difference <- 'Mean'
+# Rename "Mean_diff" column to identical as Unanimity df (below)
+names(df4mean)[names(df4mean) == "Mean_diff"] <- "value"
+### Repeat for Unanimity
+df4unanimity <- df4[,c("spp_name", "name", "Unanimity_diff")]
+df4unanimity$Difference <- 'Unanimity'
+names(df4unanimity)[names(df4unanimity) == "Unanimity_diff"] <- "value"
+df4 <- rbind(df4mean, df4unanimity) # combine the two data frames
+names(df4)[names(df4) == "name"] <- "question"
+df_test2 <- rbind(df4, df3b)# combine the two data frames
+# specify question values 
+df_test2[df_test2$question=="q1", "question"] <- "1900-1976"
+df_test2[df_test2$question=="q2", "question"] <- "1976-2016"
+
+### Plot
+ggplot(df_test2, aes(value, group = spp_name)) + geom_histogram(bins = 14)  + 
+  facet_grid(question ~ Difference ) +
+  labs(x = "Score", y = "Species",
+  title ="Figure D: Mean- and unanimity scores by time period 
+  and the species-specific differences between periods") +
+  theme(legend.key = element_rect(fill = "white", color = NA)) +
+  theme(panel.background=element_rect(fill="white", colour="black")) +
+  theme(legend.position="none") +
+  scale_fill_hue(c=45, l=80) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, NA)) +
+  theme(text = element_text(size = 14))  
+```
+<br />
+<br />
+```{r table, eval=TRUE, echo=FALSE, results='asis', cache=FALSE}
+require("knitr")
+df4mean <- df4mean[,c("spp_name","value")]
+kable(head(df4mean[order(df4mean$value, decreasing = TRUE), ]), caption = "Lowest distances between pre-1976 vs. post-1976 mean scores")
+kable(tail(df4mean[order(df4mean$value, decreasing = TRUE), ]), caption = "Highest distances between pre-1976 vs. post-1976 mean scores")
+
+df4unanimity <- df4unanimity[,c("spp_name","value")]
+kable(head(df4unanimity[order(df4unanimity$value, decreasing = TRUE), ]), caption = "Lowest distances between pre-1976 vs. post-1976 unanimity scores")
+kable(tail(df4unanimity[order(df4unanimity$value, decreasing = TRUE), ]), caption = "Highest distances between pre-1976 vs. post-1976 unanimity scores")
+```
+<br />
+
+**General trends:**  
+
+* Nearly all 'approval' and unanimity scores are higher for post-1976 trends compared to pre-1976 trends. 
+* The mean themselves are not bell curved but we can see that the difference between points is! EXCEPT for the few species to the right    
+
 <br />
 <br />
