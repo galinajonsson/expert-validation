@@ -13,40 +13,25 @@ output:
 ## Introduction
 
 <br/>
-Effort was made to ensure that the experts represented different professional backgrounds (research, conservation, curation, etc.) to limit systematic bias by averaging out individual subjectivity (Morgan, 2014). We approached the experts via email and invited them to participate in this review. Ten experts agreed to sit on the evaluation panel.    
 
-Given the need to recruit multiple experts representing different individual and professional backgrounds, and that the total pool of candidate experts was felt to be small, ensuring high expert recruitment rates was a priority to limit systematic bias by averaging out individual subjectivity. We approached the experts via email and invited them to participate in this review. Ten experts agreed to sit on the evaluation panel.    
+* <span style="color: red;">**Nick:**</span>: <span style="color: red;">*I think you can draw a strong conclusion from this. A conclusion that would give the paper something more concrete in terms of a methodological advance. It is this: If there had been fewer than 10 experts, the scores would have been different. So 10 is good rule of thumb for this kind of exercise. You could back this up with a resampling exercise. For n %in% 2:10 select n experts with replacement and recalculate the scores. Calculate one metric about the inter-expert variation and see how this settles down as n increases. Do this 100 times.*</span>
 
-There was much variation between individual experts’ mean scores and variances **(e.g., see manuscript Figure 4.A)**. Humans are not perfect statistical processors, and when facing uncertainty tend unconsciously to use cognitive heuristics. As a result, opinions are often biased by, for example, attaching undue weight to the evidence most recently encountered . An in-depth review of all potential sources of bias was not within the scope of our study. 
+Effort was made to ensure that the experts represented different professional backgrounds (research, conservation, curation, etc.) to limit systematic bias by averaging out individual subjectivity (Morgan, 2014).     
 
+Ten experts agreed to sit on the evaluation panel. Given the need to recruit multiple experts representing different individual and professional backgrounds, and that the total pool of candidate experts was felt to be small, ensuring high expert recruitment rates was a priority to limit systematic bias by averaging out individual subjectivity.     
 
-**Aims of exercise**
-We did, however, 
-
+There was much variation between individual experts’ mean scores and variances **(e.g., see manuscript/paper Figure 4.A)**. Humans are not perfect statistical processors, and when facing uncertainty tend unconsciously to use cognitive heuristics. As a result, opinions are often biased by, for example, attaching undue weight to the evidence most recently encountered. An in-depth review of all potential sources of bias was not within the scope of our study. 
 
 
-*I think you can draw a strong conclusion from this. A conclusion that would give the paper something more concrete in terms of a methodological advance.
-
-It is this: If there had been fewer than 10 experts, the scores would have been different. So 10 is good rule of thumb for this kind of exercise.
-
-You could back this up with a resampling exercise. For n %in% 2:10 select n experts with replacement and recalculate the scores. Calculate one metric about the inter-expert variation and see how this settles down as n increases. Do this 100 times.*
+As such, the **aim of this exercise** is to test whether there had been fewer than 10 experts, would the scores would have been different. In other words, given the limited pool of experts in the present study, test whether 10 is good rule of thumb for this kind of exercise.     
 
 
-Having generated 100 samples of a total of each of two to ten expert scores (with replacement), here, I calculate metrices about the inter-expert variation and see how these settle down (or not) as the number of experts sampled increases. Namely, I look at the distribution of 
+We approach this through a resampling exercise, generating n %in% 2:10 select n experts with replacement and recalculate the scores. We calculate two metrics about the inter-expert variation. We do this 100 times (i.e., 2,3,4..9, 10). 100 samples of a total of each of two to ten expert scores (with replacement), and we calculate metrics about the inter-expert variation to see how these settle down (or not) as the number of experts sampled increases. Namely, we look at the distribution of the two metrics:    
 
-* **Unanimity**:    
-* **Coefficient of Variation** is the ratio of the standard deviation to the mean, making it independent of the units, and hence, useful when comparing data sets with different units or, as here, widely different means (as expected from e.g., a sample of two expert scores vs. a sample of ten).       
+* **Unanimity**: calculated as 1-variance <span style="color: red;">**[Add more; see page 10, ms]**</span>.    
+* **Coefficient of Variation** is the ratio of the standard deviation to the mean, making it independent of the units, and hence, useful when comparing data sets with different units or, as here, widely different means (as is expected from e.g., a sample of two expert scores vs. a sample of ten).       
 
-The unanimity metric and the coefficient of variation are based on the variance and the standard deviation, respectively. Hence, the choise of these two metrics about the inter-expert variation capture both the average degree to which each point differs from the mean (variance) and the total spread from the mean (standard deviation).  
-
-The standard deviation is a statistic that measures the dispersion of a data set relative to its mean. It is used to determine the spread of values in a single data set rather than to compare different units.
-
-
-
-
-
-In short, the standard deviation measures how far the average value lies from the mean, whereas the coefficient of variation measures the ratio of the standard deviation to the mean.
-2
+The unanimity metric and the coefficient of variation are based on the variance and the standard deviation, respectively. Hence, the choise of these two metrics about the inter-expert variation capture both the average degree to which each score differs from the mean (variance) and the total spread from the mean of scores (standard deviation). In short, the standard deviation measures how far the average value lies from the mean, whereas the coefficient of variation measures the ratio of the standard deviation to the mean.     
 
 <br/>
 
@@ -156,8 +141,8 @@ CVp2 <- subset(resamp.sum, CV >-7000) %>%
   theme(legend.position = "none", axis.title.y = element_blank()) + ggtitle("")
 
 ### Create title and subtitle text grobs
-CVtgrob1 <- text_grob("Distribution of Coefficient of Variation By Expert Number", size = 14)
-CVtitle_1 <- as_ggplot(CVtgrob1) + theme(plot.margin = margin(0,-4,0,1, "cm")) # Draw the text
+CVtgrob1 <- text_grob("Figure S3.A: Distribution of Coefficient of Variation By Expert Number", size = 14)
+CVtitle_1 <- as_ggplot(CVtgrob1) + theme(plot.margin = margin(0,-5.8,0,1, "cm")) # Draw the text
 ### Plot 
 CV <- ggarrange(CVtitle_1, NULL, CVp1, CVp2, ncol = 2,nrow = 2, 
           labels = c("", "", "(A)", "(B)"), heights = c(0.5,5))
@@ -183,15 +168,15 @@ Up2 <- resamp.sum %>%
   theme(legend.position = "none", axis.title.y = element_blank()) + ggtitle("")
 
 ### Create title and subtitle text grobs
-Utgrob1 <- text_grob("Distribution of Unanimity By Expert Number", size = 14)
-Utitle_1 <- as_ggplot(Utgrob1) + theme(plot.margin = margin(0,-1.5,0,1, "cm")) # Draw the text
+Utgrob1 <- text_grob("Figure S3.B: Distribution of Unanimity By Expert Number", size = 14)
+Utitle_1 <- as_ggplot(Utgrob1) + theme(plot.margin = margin(0,-2.5,0,1, "cm")) # Draw the text
 ### Plot 
 U <- ggarrange(Utitle_1, NULL, Up1, Up2, ncol = 2,nrow = 2, 
           labels = c("", "", "(A)", "(B)"), heights = c(0.5,5))
 ```
 <br />
 
-I repeat this (i.e., calculate CV and unanimity) separately for each of the two time series, and visualise the resulting distributions (see reuslts).     
+I repeat this (i.e., calculate CV and unanimity) separately for each of the two time series, and visualize the resulting distributions (see results).     
 
 <br />
 ```{r summarise-resampled-scores-byTP, eval=TRUE, cache=FALSE, echo=TRUE, warning=FALSE, message=FALSE}
@@ -231,7 +216,7 @@ CVp1B <- resamp.sum2 %>%
   geom_boxplot(alpha=0.3) + facet_grid(~Time_Period) +
   geom_vline(xintercept = 0, color =c("black")) + theme_minimal() +
   theme(legend.position = "none", axis.title.y = element_blank()) +
-  ggtitle("Distribution of Coefficient of Variation By Expert Number and Time Period")
+  ggtitle("Figure S3.C: Distribution of Coefficient of Variation By Expert Number and Period")
 
 ###########################################################
 ################## Distribution of Unanimity
@@ -254,8 +239,8 @@ Up2B <- resamp.sum2 %>%
   facet_grid(~Time_Period) + theme_minimal() +
   theme(legend.position = "none", axis.title.y = element_blank()) + ggtitle("")
 ### Create title and subtitle text grobs
-Utgrob1 <- text_grob("Distribution of Unanimity by Expert Number and Time Period", size = 14)
-Utitle_1 <- as_ggplot(Utgrob1) + theme(plot.margin = margin(0,-4,0,1, "cm")) # Draw the text
+Utgrob1 <- text_grob("Figure S3.D: Distribution of Unanimity by Expert Number and Time Period", size = 14)
+Utitle_1 <- as_ggplot(Utgrob1) + theme(plot.margin = margin(0,-6.5,0,1, "cm")) # Draw the text
 
 ### Plot 
 U2 <- ggarrange(Utitle_1, NULL, Up1B, Up2B, ncol = 2,nrow = 2, 
